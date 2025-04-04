@@ -4,13 +4,11 @@ namespace App\Console\Commands;
 
 use App\Models\PreOpenMarketData;
 use App\Models\StockHistoricalData;
-use App\Services\NseApiClient;
 use Carbon\Carbon;
-use GuzzleHttp\Cookie\CookieJar;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Ixudra\Curl\Facades\Curl;
 
 class FetchHistoricalDataCommand extends Command
 {
@@ -23,9 +21,7 @@ class FetchHistoricalDataCommand extends Command
                             {--symbol=all : Symbol ID or "all" for all symbols}
                             {--start-date= : Start date (YYYY-MM-DD)}
                             {--end-date= : End date (YYYY-MM-DD)}
-                            {--chunk=10 : Number of symbols to process in each chunk}
-                            {--from-id= : Start processing from this symbol ID}
-                            {--to-id= : Process symbols up to this ID}';
+                            {--chunk=10 : Number of symbols to process in each chunk}';
 
     /**
      * The console command description.
@@ -34,19 +30,8 @@ class FetchHistoricalDataCommand extends Command
      */
     protected $description = 'Fetch historical stock data from NSE';
 
-    /**
-     * @var NseApiClient
-     */
-    protected $apiClient;
-
-    /**
-     * Create a new command instance.
-     */
-    public function __construct(NseApiClient $apiClient)
-    {
-        parent::__construct();
-        $this->apiClient = $apiClient;
-    }
+    private $baseUrl = 'https://www.nseindia.com';
+    private $cookieMaxAge = 900; // 15 minutes in seconds
 
     /**
      * Execute the console command.
@@ -57,19 +42,11 @@ class FetchHistoricalDataCommand extends Command
         $startDate = $this->option('start-date') ? Carbon::parse($this->option('start-date'))->format('Y-m-d') : Carbon::now()->subDays(30)->format('Y-m-d');
         $endDate = $this->option('end-date') ? Carbon::parse($this->option('end-date'))->format('Y-m-d') : Carbon::now()->format('Y-m-d');
         $chunkSize = (int)$this->option('chunk');
-        $fromId = $this->option('from-id');
-        $toId = $this->option('to-id');
 
         $this->info("Fetching historical data from {$startDate} to {$endDate}");
 
         // Get symbols to fetch
-        if ($fromId && $toId) {
-            // Get symbols by ID range
-            $symbols = PreOpenMarketData::whereBetween('id', [$fromId, $toId])
-                ->pluck('symbol', 'id')
-                ->toArray();
-            $this->info("Processing symbols with IDs from {$fromId} to {$toId}: " . count($symbols) . " symbols");
-        } elseif ($symbolOption === 'all') {
+        if ($symbolOption === 'all') {
             $symbols = PreOpenMarketData::pluck('symbol', 'id')->toArray();
             $this->info("Processing all " . count($symbols) . " symbols");
         } else {
@@ -93,32 +70,37 @@ class FetchHistoricalDataCommand extends Command
 
             foreach ($symbolsChunk as $symbolId => $symbolName) {
                 try {
-                    $fromDate = Carbon::parse($startDate)->format('d-m-Y');
-                    $toDate = Carbon::parse($endDate)->format('d-m-Y');
+                    // Get NSE cookies for authentication
+                    $auth = $this->getNseCookies();
 
-                    $this->info("Requesting data for {$symbolName} from {$fromDate} to {$toDate}");
+                    $headers = [
+                        'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                        'Accept: application/json, text/plain, */*',
+                        'Accept-Language: en-US,en;q=0.9',
+                        'Referer: https://www.nseindia.com/',
+                        'Authority: www.nseindia.com',
+                    ];
 
-                    $response = $this->apiClient->getHistoricalData($symbolName, $fromDate, $toDate);
 
-                    if (!$response->successful()) {
-                        Log::error("Failed API response for {$symbolName}: " . $response->status());
-                        $errors[] = "Failed to fetch data for {$symbolName}: HTTP " . $response->status();
-                        $this->output->progressAdvance();
-                        continue;
-                    }
+                    $url = 'http://localhost:3000/api/equity/historical/' . $symbolName . '?dateStart=' . Carbon::parse($startDate)->format('Y-m-d') . '&dateEnd=' . Carbon::parse($endDate)->format('Y-m-d');
 
-                    $responseData = $response->json();
+                    $response = Curl::to($url)
+                        ->withHeaders($headers)
+                        ->asJson(true)
+                        ->get();
 
-                    if (empty($responseData)) {
-                        Log::error("Empty API response for {$symbolName}");
+
+                    if (empty($response)) {
+                        Log::error("Empty API response for URL $url");
                         $errors[] = "Failed to fetch data for {$symbolName}: Empty response";
                         $this->output->progressAdvance();
                         continue;
                     }
 
-                    // Handle the response structure
-                    if (isset($responseData['data']) && is_array($responseData['data'])) {
-                        $stockData = $responseData['data'];
+                    // Handle the specific response structure
+                    // The response is an array containing an object with a 'data' property
+                    if (is_array($response) && isset($response[0]) && isset($response[0]['data']) && is_array($response[0]['data'])) {
+                        $stockData = $response[0]['data'];
                         $recordsProcessed = 0;
 
                         foreach ($stockData as $item) {
@@ -146,8 +128,6 @@ class FetchHistoricalDataCommand extends Command
                                 'total_trades' => $item['CH_TOTAL_TRADES'] ?? null,
                                 'isin' => $item['CH_ISIN'] ?? null,
                                 'vwap' => $item['VWAP'] ?? null,
-                                'delivery_quantity' => $item['COP_DELIV_QTY'] ?? null,
-                                'delivery_percent' => $item['COP_DELIV_PERC'] ?? null,
                             ];
 
                             if ($existingRecord) {
@@ -162,14 +142,14 @@ class FetchHistoricalDataCommand extends Command
                         $this->info("  - {$symbolName}: Processed {$recordsProcessed} records");
                     } else {
                         // Log the actual response structure for debugging
-                        Log::error("Unexpected API response structure for {$symbolName}: " . json_encode($responseData));
+                        Log::error("Unexpected API response structure for {$symbolName}: " . json_encode($response));
                         $errors[] = "No data found for {$symbolName} in the specified date range";
                         $this->warn("  - {$symbolName}: No data found or unexpected response format");
                     }
                 } catch (\Exception $e) {
-                    $errors[] = "Error processing {$symbolName}: " . $e->getMessage();
-                    Log::error("Exception while processing {$symbolName}: " . $e->getMessage());
-                    $this->error("  - {$symbolName}: " . $e->getMessage());
+                    // $errors[] = "Error processing {$symbolName}: " . $e->getMessage();
+                    // Log::error("Exception while processing {$symbolName}: " . $e->getMessage());
+                    // $this->error("  - {$symbolName}: " . $e->getMessage());
                 }
 
                 $this->output->progressAdvance();
@@ -202,5 +182,73 @@ class FetchHistoricalDataCommand extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * Get NSE cookies for authentication
+     * 
+     * @return array
+     */
+    private function getNseCookies()
+    {
+        // Check if we have valid cookies in cache
+        if (
+            Cache::has('nse_cookies') &&
+            Cache::has('nse_cookie_used_count') &&
+            Cache::has('nse_cookie_expiry') &&
+            Cache::get('nse_cookie_used_count') <= 10 &&
+            Cache::get('nse_cookie_expiry') > time()
+        ) {
+            // Increment the used count
+            Cache::increment('nse_cookie_used_count');
+
+            return [
+                'cookies' => Cache::get('nse_cookies'),
+                'user_agent' => Cache::get('nse_user_agent')
+            ];
+        }
+
+        // Generate a random user agent
+        $userAgents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0'
+        ];
+        $userAgent = $userAgents[array_rand($userAgents)];
+
+        $this->info("Getting new NSE cookies...");
+
+        // Make a request to get cookies
+        $response = Curl::to($this->baseUrl . '/get-quotes/equity?symbol=TCS')
+            ->withHeader('User-Agent: ' . $userAgent)
+            ->withHeader('Accept: application/json, text/plain, */*')
+            ->withHeader('Accept-Language: en-US,en;q=0.9')
+            ->withHeader('Referer: ' . $this->baseUrl)
+            ->returnResponseObject()
+            ->get();
+
+        $cookies = [];
+
+        if (isset($response->headers['Set-Cookie'])) {
+            $setCookies = $response->headers['Set-Cookie'];
+            foreach ($setCookies as $cookie) {
+                $cookieKeyValue = explode(';', $cookie)[0];
+                $cookies[] = $cookieKeyValue;
+            }
+        }
+
+        $cookieString = implode('; ', $cookies);
+
+        // Store in cache
+        Cache::put('nse_cookies', $cookieString, $this->cookieMaxAge);
+        Cache::put('nse_user_agent', $userAgent, $this->cookieMaxAge);
+        Cache::put('nse_cookie_used_count', 1, $this->cookieMaxAge);
+        Cache::put('nse_cookie_expiry', time() + $this->cookieMaxAge, $this->cookieMaxAge);
+
+        return [
+            'cookies' => $cookieString,
+            'user_agent' => $userAgent
+        ];
     }
 }

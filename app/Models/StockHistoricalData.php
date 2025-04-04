@@ -32,6 +32,8 @@ class StockHistoricalData extends Model
         'total_trades',
         'isin',
         'vwap',
+        'delivery_quantity',
+        'delivery_percent',
     ];
 
     /**
@@ -53,6 +55,8 @@ class StockHistoricalData extends Model
         'week_low_52' => 'decimal:2',
         'total_trades' => 'integer',
         'vwap' => 'decimal:2',
+        'delivery_quantity' => 'integer',
+        'delivery_percent' => 'decimal:2',
     ];
 
     /**
@@ -89,6 +93,8 @@ class StockHistoricalData extends Model
                 'total_trades' => $data['CH_TOTAL_TRADES'] ?? null,
                 'isin' => $data['CH_ISIN'] ?? null,
                 'vwap' => $data['VWAP'] ?? null,
+                'delivery_quantity' => $data['COP_DELIV_QTY'] ?? null,
+                'delivery_percent' => $data['COP_DELIV_PERC'] ?? null,
                 'external_id' => $data['_id'] ?? null,
             ]
         );

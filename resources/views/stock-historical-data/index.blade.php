@@ -31,12 +31,30 @@
                             </div>
                         @endif
 
+                        <!-- Time period filter buttons -->
+                        <div class="mb-3">
+                            <div class="btn-group" role="group" aria-label="Time period filters">
+                                <button type="button" class="btn btn-outline-primary time-filter"
+                                    data-days="1">1D</button>
+                                <button type="button" class="btn btn-outline-primary time-filter"
+                                    data-days="7">1W</button>
+                                <button type="button" class="btn btn-primary time-filter active" data-days="30">1M</button>
+                                <button type="button" class="btn btn-outline-primary time-filter"
+                                    data-days="90">3M</button>
+                                <button type="button" class="btn btn-outline-primary time-filter"
+                                    data-days="180">6M</button>
+                                <button type="button" class="btn btn-outline-primary time-filter"
+                                    data-days="365">1Y</button>
+                            </div>
+                        </div>
+
                         <div class="mb-4">
                             <div class="row">
                                 <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="filter_symbol">Symbol</label>
-                                        <select id="filter_symbol" class="form-select" data-choices id="choices-filter-symbol">
+                                        <select id="filter_symbol" class="form-select" data-choices
+                                            id="choices-filter-symbol">
                                             <option value="all">All Symbols</option>
                                             @foreach ($symbols as $id => $symbol)
                                                 <option value="{{ $id }}">{{ $symbol }}</option>
@@ -84,7 +102,8 @@
                     <div class="modal-body">
                         <div class="form-group mb-3">
                             <label for="symbol_id">Symbol</label>
-                            <select name="symbol_id" id="symbol_id" class="form-select" data-choices id="choices-symbol" required>
+                            <select name="symbol_id" id="symbol_id" class="form-select" data-choices id="choices-symbol"
+                                required>
                                 <option value="">Select Symbol</option>
                                 <option value="all">All Symbols</option>
                                 @foreach ($symbols as $id => $symbol)
@@ -115,6 +134,40 @@
     {{ $dataTable->scripts() }}
     <script>
         $(document).ready(function() {
+            // Set default end date to today
+            const today = new Date();
+            const todayStr = today.toISOString().substr(0, 10);
+            $('#end_date').val(todayStr);
+            $('#filter_end_date').val(todayStr);
+
+            // Set default start date to 30 days ago (1M)
+            let defaultDays = 30;
+            let startDate = new Date();
+            startDate.setDate(startDate.getDate() - defaultDays);
+            let startDateStr = startDate.toISOString().substr(0, 10);
+            $('#start_date').val(startDateStr);
+            $('#filter_start_date').val(startDateStr);
+
+            // Time period filter buttons
+            $('.time-filter').on('click', function() {
+                // Remove active class from all buttons
+                $('.time-filter').removeClass('active btn-primary').addClass('btn-outline-primary');
+                // Add active class to clicked button
+                $(this).addClass('active btn-primary').removeClass('btn-outline-primary');
+
+                const days = $(this).data('days');
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - days);
+
+                // Update date inputs
+                $('#filter_start_date').val(startDate.toISOString().substr(0, 10));
+                $('#filter_end_date').val(endDate.toISOString().substr(0, 10));
+
+                // Trigger filter
+                window.LaravelDataTables['stock-historical-data-table'].draw();
+            });
+
             // Apply filters
             $('#apply_filters').click(function() {
                 window.LaravelDataTables['stock-historical-data-table'].draw();
@@ -123,17 +176,22 @@
             // Reset filters
             $('#reset_filters').click(function() {
                 $('#filter_symbol').val('all').trigger('change');
-                $('#filter_start_date').val('');
-                $('#filter_end_date').val('');
+
+                // Reset to default 30 days (1M)
+                const today = new Date();
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+                $('#filter_start_date').val(thirtyDaysAgo.toISOString().substr(0, 10));
+                $('#filter_end_date').val(today.toISOString().substr(0, 10));
+
+                // Reset active button to 1M
+                $('.time-filter').removeClass('active btn-primary').addClass('btn-outline-primary');
+                $('.time-filter[data-days="30"]').addClass('active btn-primary').removeClass(
+                    'btn-outline-primary');
+
                 window.LaravelDataTables['stock-historical-data-table'].draw();
             });
-
-            // Set default end date to today
-            $('#end_date').val(new Date().toISOString().substr(0, 10));
-            // Set default start date to 30 days ago
-            let thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            $('#start_date').val(thirtyDaysAgo.toISOString().substr(0, 10));
 
             // Pass filter values to DataTable
             window.LaravelDataTables['stock-historical-data-table'].on('preXhr.dt', function(e, settings, data) {

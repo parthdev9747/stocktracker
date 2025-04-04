@@ -18,17 +18,29 @@ class PreOpenMarketDataDataTable extends DataTable
             ->setRowId('id')
             ->addIndexColumn()
             ->editColumn('price', function ($row) {
-                return '₹' . number_format($row->price, 2);
+                if ($row->latestHistoricalData) {
+                    return '₹' . number_format($row->latestHistoricalData->closing_price, 2);
+                }
+                return '<span class="text-muted">N/A</span>';
             })
             ->editColumn('change', function ($row) {
-                $class = $row->change >= 0 ? 'text-success' : 'text-danger';
-                $sign = $row->change >= 0 ? '+' : '';
-                return '<span class="' . $class . '">' . $sign . number_format($row->change, 2) . '</span>';
+                if ($row->latestHistoricalData && $row->latestHistoricalData->previous_close_price) {
+                    $change = $row->latestHistoricalData->closing_price - $row->latestHistoricalData->previous_close_price;
+                    $class = $change >= 0 ? 'text-success' : 'text-danger';
+                    $sign = $change >= 0 ? '+' : '';
+                    return '<span class="' . $class . '">' . $sign . number_format($change, 2) . '</span>';
+                }
+                return '<span class="text-muted">N/A</span>';
             })
             ->editColumn('percent_change', function ($row) {
-                $class = $row->percent_change >= 0 ? 'badge bg-success' : 'badge bg-danger';
-                $sign = $row->percent_change >= 0 ? '+' : '';
-                return '<span class="' . $class . '">' . $sign . number_format($row->percent_change, 2) . '%</span>';
+                if ($row->latestHistoricalData && $row->latestHistoricalData->previous_close_price) {
+                    $change = $row->latestHistoricalData->closing_price - $row->latestHistoricalData->previous_close_price;
+                    $percentChange = ($change / $row->latestHistoricalData->previous_close_price) * 100;
+                    $class = $percentChange >= 0 ? 'badge bg-success' : 'badge bg-danger';
+                    $sign = $percentChange >= 0 ? '+' : '';
+                    return '<span class="' . $class . '">' . $sign . number_format($percentChange, 2) . '%</span>';
+                }
+                return '<span class="text-muted">N/A</span>';
             })
             ->editColumn('is_fno', function ($row) {
                 $checked = $row->is_fno ? 'checked' : '';
@@ -48,7 +60,7 @@ class PreOpenMarketDataDataTable extends DataTable
                 $deleteBtn = '';
                 $containerStart = '<div class="d-flex justify-content-center gap-2">';
 
-                //$viewBtn = '<a href="' . route('pre-open-market-data.show', $row->id) . '" class="btn btn-info btn-icon waves-effect waves-light"><i class="ri-eye-line"></i></a>';
+                $viewBtn = '<a href="' . route('stock-historical-data.index', ['symbol_id' => $row->id]) . '" class="btn btn-info btn-icon waves-effect waves-light" title="View Historical Data"><i class="ri-line-chart-line"></i></a>';
 
                 // if (auth()->user()->can('edit-market-data')) {
                 //     $editBtn = '<a href="' . route('pre-open-market-data.edit', $row->id) . '" class="btn btn-primary btn-icon waves-effect waves-light"><i class="ri-edit-2-line"></i></a>';
@@ -61,12 +73,21 @@ class PreOpenMarketDataDataTable extends DataTable
                 $containerEnd = '</div>';
                 return $containerStart . $viewBtn . ' ' . $editBtn . ' ' . $deleteBtn . $containerEnd;
             })
-            ->rawColumns(['change', 'percent_change', 'is_fno', 'status', 'action']);
+            ->rawColumns(['change', 'percent_change', 'is_fno', 'status', 'latest_price', 'latest_change', 'latest_percent', 'action']);
     }
 
     public function query(PreOpenMarketData $model): QueryBuilder
     {
-        return $model->newQuery()->orderBy('symbol', 'asc');
+        // Use the enhanced query with latest historical data
+        return $model->newQuery()
+            ->with('latestHistoricalData')
+            ->when(request()->has('is_fno'), function ($query) {
+                return $query->where('is_fno', request('is_fno') == 'true');
+            })
+            ->when(request()->has('status'), function ($query) {
+                return $query->where('status', request('status'));
+            })
+            ->orderBy('symbol', 'asc');
     }
 
     public function html(): HtmlBuilder

@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
     // Add this to the $commands array in the Kernel class
     /**
      * The Artisan commands provided by your application.
-     * php artisan stock:fetch-historical-data --symbol=ASHOKLEY --start-date=2025-04-01 --end-date=2023-04-04 --chunk=5
+     * php artisan stock:fetch-historical-data --symbol=all --start-date=2025-04-01 --end-date=2025-04-04 --chunk=5 --from-id=80 --to-id=100
      * @var array
      */
     protected $commands = [

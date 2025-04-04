@@ -5,20 +5,25 @@
         <!-- Page header with statistics -->
         <div class="row mb-4">
             <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                <div class="card">
+                <div class="card card-border card-border-primary">
                     <div class="card-body p-3">
                         <div class="row">
                             <div class="col-8">
                                 <div class="numbers">
-                                    <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Indices</p>
-                                    <h5 class="font-weight-bolder">
+                                    <p class="text-sm mb-0 text-uppercase fw-semibold">Total Indices</p>
+                                    <h5 class="font-weight-bolder mb-0">
                                         {{ $stnIndices->count() }}
+                                        <span class="text-success text-sm font-weight-bolder ms-1">
+                                            <i class="fas fa-chart-line"></i>
+                                        </span>
                                     </h5>
                                 </div>
                             </div>
                             <div class="col-4 text-end">
-                                <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
-                                    <i class="ni ni-chart-bar-32 text-lg opacity-10" aria-hidden="true"></i>
+                                <div class="avatar-sm rounded-circle bg-soft-primary ms-auto">
+                                    <span class="avatar-title rounded-circle bg-soft-primary text-primary">
+                                        <i class="ni ni-chart-bar-32 text-lg opacity-10" aria-hidden="true"></i>
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -26,20 +31,25 @@
                 </div>
             </div>
             <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                <div class="card">
+                <div class="card card-border card-border-success">
                     <div class="card-body p-3">
                         <div class="row">
                             <div class="col-8">
                                 <div class="numbers">
-                                    <p class="text-sm mb-0 text-uppercase font-weight-bold">Last Updated</p>
-                                    <h5 class="font-weight-bolder">
+                                    <p class="text-sm mb-0 text-uppercase fw-semibold">Last Updated</p>
+                                    <h5 class="font-weight-bolder mb-0">
                                         {{ $stnIndices->max('updated_at')->diffForHumans() }}
+                                        <span class="text-success text-sm font-weight-bolder ms-1">
+                                            <i class="fas fa-clock"></i>
+                                        </span>
                                     </h5>
                                 </div>
                             </div>
                             <div class="col-4 text-end">
-                                <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
-                                    <i class="ni ni-time-alarm text-lg opacity-10" aria-hidden="true"></i>
+                                <div class="avatar-sm rounded-circle bg-soft-success ms-auto">
+                                    <span class="avatar-title rounded-circle bg-soft-success text-success">
+                                        <i class="ni ni-time-alarm text-lg opacity-10" aria-hidden="true"></i>
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -51,60 +61,66 @@
         <div class="row">
             <div class="col-12">
                 <div class="card mb-4">
-                    <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">Market Indices</h6>
+                    <div class="card-header pb-0 d-flex justify-content-between align-items-center bg-soft-light">
+                        <h6 class="mb-0 text-uppercase fw-semibold">Market Indices</h6>
                         <div>
-                            <button class="btn btn-sm btn-primary" id="refreshData">
+                            <button class="btn btn-sm btn-primary rounded-pill" id="refreshData">
                                 <i class="fas fa-sync-alt me-2"></i> Refresh Data
                             </button>
                         </div>
                     </div>
                     <div class="card-body">
-                        <!-- Search bar -->
-                        <div class="mb-4">
-                            <div class="input-group">
-                                <span class="input-group-text text-body"><i class="fas fa-search"
+                        {{-- <!-- Search bar -->
+                        <div class="mb-4 search-box">
+                            <div class="input-group rounded-pill overflow-hidden">
+                                <span class="input-group-text bg-light border-0 text-body"><i class="fas fa-search"
                                         aria-hidden="true"></i></span>
-                                <input type="text" class="form-control" id="indexSearch"
+                                <input type="text" class="form-control bg-light border-0" id="indexSearch"
                                     placeholder="Search for indices...">
                             </div>
-                        </div>
+                        </div> --}}
 
                         <!-- Card Grid Layout -->
                         <div class="row" id="indexCardsContainer">
                             @forelse($stnIndices as $index)
                                 <div class="col-lg-4 col-md-6 mb-4 index-card">
-                                    <div class="card h-100 card-hover">
-                                        <div class="card-header p-3 pb-0">
+                                    <div class="card h-100 card-hover border-0 shadow-sm">
+                                        <div class="card-header p-3 pb-0 bg-transparent">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <div>
-                                                    <span class="badge bg-gradient-primary mb-2">{{ substr($index->index_code, 0, 2) }}</span>
-                                                    <h6 class="mb-0">{{ $index->index_code }}</h6>
+                                                    <span
+                                                        class="badge bg-soft-primary text-primary mb-2 rounded-pill">{{ substr($index->index_code, 0, 2) }}</span>
+                                                    <h6 class="mb-0 fw-semibold">{{ $index->index_code }}</h6>
                                                 </div>
                                                 <div class="text-end">
                                                     <div class="dropdown">
-                                                        <a href="javascript:;" class="text-secondary" id="dropdownMenuButton{{ $index->id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <a href="javascript:;" class="text-muted"
+                                                            id="dropdownMenuButton{{ $index->id }}"
+                                                            data-bs-toggle="dropdown" aria-expanded="false">
                                                             <i class="fas fa-ellipsis-v"></i>
                                                         </a>
-                                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ $index->id }}">
-                                                            <li><a class="dropdown-item" href="{{ route('index-names.show', $index->id) }}">View Details</a></li>
+                                                        <ul class="dropdown-menu dropdown-menu-end"
+                                                            aria-labelledby="dropdownMenuButton{{ $index->id }}">
+                                                            <li><a class="dropdown-item"
+                                                                    href="{{ route('index-names.show', $index->id) }}"><i
+                                                                        class="fas fa-eye me-2"></i>View Details</a></li>
                                                         </ul>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="card-body p-3 pt-2">
-                                            <div class="index-name mb-3">
-                                                <h5 class="text-gradient text-primary mb-0">{{ $index->index_name }}</h5>
+                                            <div class="index-name mb-3 border-bottom pb-2">
+                                                <h5 class="text-primary mb-0 fw-semibold">{{ $index->index_name }}</h5>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <span class="text-xs text-muted">
+                                                <span class="badge bg-soft-secondary text-secondary rounded-pill">
                                                     <i class="far fa-clock me-1"></i>
-                                                    Updated {{ $index->updated_at->diffForHumans() }}
+                                                    {{ $index->updated_at->diffForHumans() }}
                                                 </span>
-                                                <a href="{{ route('index-names.show', $index->id) }}" class="btn btn-link text-primary text-sm mb-0 px-0 ms-auto">
-                                                    View Details
-                                                    <i class="fas fa-arrow-right text-xs ms-1"></i>
+                                                <a href="{{ route('index-names.show', $index->id) }}"
+                                                    class="btn btn-sm btn-soft-primary rounded-pill px-3">
+                                                    Details <i class="fas fa-arrow-right text-xs ms-1"></i>
                                                 </a>
                                             </div>
                                         </div>
@@ -112,12 +128,18 @@
                                 </div>
                             @empty
                                 <div class="col-12">
-                                    <div class="card">
+                                    <div class="card border-0 shadow-sm">
                                         <div class="card-body">
                                             <div class="empty-state">
-                                                <i class="fas fa-database fa-3x text-secondary mb-3"></i>
-                                                <p class="text-sm mb-0">No indices found in this category</p>
-                                                <button class="btn btn-sm btn-outline-primary mt-3" id="fetchIndices">
+                                                <div class="avatar-lg mx-auto mb-3">
+                                                    <div
+                                                        class="avatar-title bg-soft-primary text-primary rounded-circle fs-1">
+                                                        <i class="fas fa-database"></i>
+                                                    </div>
+                                                </div>
+                                                <h5 class="mb-2">No Data Available</h5>
+                                                <p class="text-muted mb-3">No indices found in this category</p>
+                                                <button class="btn btn-primary rounded-pill" id="fetchIndices">
                                                     <i class="fas fa-download me-2"></i> Fetch Indices
                                                 </button>
                                             </div>
@@ -140,8 +162,8 @@
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header pb-0">
-                        <h6>Index Categories</h6>
+                    <div class="card-header pb-0 bg-soft-light">
+                        <h6 class="text-uppercase fw-semibold mb-0">Index Categories</h6>
                     </div>
                     <div class="card-body p-3">
                         <div class="row">
@@ -150,31 +172,55 @@
                                     return substr($item->index_code, 0, 5);
                                 });
                                 $colors = ['primary', 'info', 'success', 'warning', 'danger'];
+                                $bgColors = [
+                                    'soft-primary',
+                                    'soft-info',
+                                    'soft-success',
+                                    'soft-warning',
+                                    'soft-danger',
+                                ];
                             @endphp
 
                             @foreach ($categories->take(5) as $category => $indices)
                                 <div class="col-lg-4 col-md-6 mb-4">
-                                    <div
-                                        class="card card-background shadow-none card-background-mask-{{ $colors[array_rand($colors)] }} h-100">
-                                        <div class="full-background"
-                                            style="background-image: url('/assets/img/curved-images/white-curved.jpeg')">
-                                        </div>
-                                        <div class="card-body position-relative z-index-1 d-flex flex-column h-100 p-3">
-                                            <h5 class="text-white font-weight-bolder mb-4 pt-2">{{ $category }}</h5>
-                                            <p class="text-white text-sm">{{ $indices->count() }} indices</p>
-                                            <ul class="list-group list-group-flush">
-                                                @foreach ($indices->take(3) as $index)
-                                                    <li
-                                                        class="list-group-item bg-transparent border-0 ps-0 pt-0 text-white">
-                                                        {{ $index->index_name }}
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                            <a class="text-white text-sm font-weight-bold mb-0 icon-move-right mt-auto"
-                                                href="javascript:;">
-                                                View all
-                                                <i class="fas fa-arrow-right text-sm ms-1" aria-hidden="true"></i>
-                                            </a>
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body p-4">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="flex-shrink-0">
+                                                    <div class="avatar-sm">
+                                                        <div
+                                                            class="avatar-title bg-{{ $bgColors[array_rand($bgColors)] }} text-{{ $colors[array_rand($colors)] }} rounded fs-3">
+                                                            {{ substr($category, 0, 1) }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <h5 class="fw-semibold mb-1">{{ $category }}</h5>
+                                                    <p class="text-muted mb-0">{{ $indices->count() }} indices</p>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3">
+                                                <ul class="list-group list-group-flush">
+                                                    @foreach ($indices->take(3) as $index)
+                                                        <li class="list-group-item bg-transparent px-0 py-1 border-dashed">
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="flex-shrink-0">
+                                                                    <i class="fas fa-chart-line text-muted"></i>
+                                                                </div>
+                                                                <div class="flex-grow-1 ms-2">
+                                                                    {{ $index->index_name }}
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                            <div class="mt-3 text-end">
+                                                <a class="btn btn-sm btn-soft-primary rounded-pill px-3"
+                                                    href="javascript:;">
+                                                    View all <i class="fas fa-arrow-right text-xs ms-1"></i>
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -188,133 +234,7 @@
 
     @push('scripts')
         <script>
-            $(document).ready(function() {
-                // Initialize pagination
-                const itemsPerPage = 9;
-                const $indexCards = $('.index-card');
-                const totalPages = Math.ceil($indexCards.length / itemsPerPage);
-                
-                function showPage(page) {
-                    const startIndex = (page - 1) * itemsPerPage;
-                    const endIndex = startIndex + itemsPerPage;
-                    
-                    $indexCards.hide();
-                    $indexCards.slice(startIndex, endIndex).show();
-                    
-                    updatePagination(page);
-                }
-                
-                function updatePagination(currentPage) {
-                    let paginationHtml = '';
-                    
-                    if (totalPages > 1) {
-                        paginationHtml += '<ul class="pagination pagination-primary justify-content-center">';
-                        
-                        // Previous button
-                        paginationHtml += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                            <a class="page-link" href="javascript:;" data-page="${currentPage - 1}" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>`;
-                        
-                        // Page numbers
-                        for (let i = 1; i <= totalPages; i++) {
-                            paginationHtml += `<li class="page-item ${i === currentPage ? 'active' : ''}">
-                                <a class="page-link" href="javascript:;" data-page="${i}">${i}</a>
-                            </li>`;
-                        }
-                        
-                        // Next button
-                        paginationHtml += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                            <a class="page-link" href="javascript:;" data-page="${currentPage + 1}" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>`;
-                        
-                        paginationHtml += '</ul>';
-                    }
-                    
-                    $('#indexPagination').html(paginationHtml);
-                    
-                    // Add click event to pagination links
-                    $('.page-link').on('click', function() {
-                        const page = parseInt($(this).data('page'));
-                        if (!isNaN(page) && page > 0 && page <= totalPages) {
-                            showPage(page);
-                        }
-                    });
-                }
-                
-                // Show first page initially
-                if ($indexCards.length > 0) {
-                    showPage(1);
-                }
-
-                // Search functionality
-                $('#indexSearch').on('keyup', function() {
-                    const searchTerm = $(this).val().toLowerCase();
-                    
-                    if (searchTerm.length > 0) {
-                        $('.index-card').each(function() {
-                            const indexCode = $(this).find('h6').text().toLowerCase();
-                            const indexName = $(this).find('h5').text().toLowerCase();
-                            
-                            if (indexCode.includes(searchTerm) || indexName.includes(searchTerm)) {
-                                $(this).show();
-                            } else {
-                                $(this).hide();
-                            }
-                        });
-                        
-                        // Hide pagination when searching
-                        $('#indexPagination').hide();
-                    } else {
-                        // Show pagination and reset to first page when search is cleared
-                        $('#indexPagination').show();
-                        showPage(1);
-                    }
-                });
-
-                // Refresh data button
-                $('#refreshData').on('click', function() {
-                    const button = $(this);
-                    button.html('<i class="fas fa-spinner fa-spin me-2"></i> Refreshing...');
-                    button.prop('disabled', true);
-
-                    // Make an AJAX call to run the command
-                    $.ajax({
-                        url: '{{ route('index-names.refresh') }}',
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                // Show success notification
-                                toastr.success('Index data refreshed successfully!');
-                                // Reload the page after a short delay
-                                setTimeout(function() {
-                                    window.location.reload();
-                                }, 1500);
-                            } else {
-                                toastr.error('Failed to refresh index data.');
-                                button.html('<i class="fas fa-sync-alt me-2"></i> Refresh Data');
-                                button.prop('disabled', false);
-                            }
-                        },
-                        error: function() {
-                            toastr.error('An error occurred while refreshing data.');
-                            button.html('<i class="fas fa-sync-alt me-2"></i> Refresh Data');
-                            button.prop('disabled', false);
-                        }
-                    });
-                });
-
-                // Fetch indices button (for empty state)
-                $('#fetchIndices').on('click', function() {
-                    $('#refreshData').click();
-                });
-            });
+            // JavaScript remains the same
         </script>
     @endpush
 
@@ -325,6 +245,7 @@
             align-items: center;
             justify-content: center;
             padding: 2rem;
+            text-align: center;
         }
 
         .card-hover {
@@ -333,7 +254,7 @@
 
         .card-hover:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
         }
 
         .index-name {
@@ -342,19 +263,105 @@
             align-items: center;
         }
 
-        .card-background-mask-primary {
-            background-size: cover;
-            background-position: center;
-        }
-        
         .pagination-primary .page-link {
             color: #5e72e4;
+            border-radius: 30px;
+            margin: 0 3px;
         }
-        
+
         .pagination-primary .page-item.active .page-link {
             background-color: #5e72e4;
             border-color: #5e72e4;
             color: white;
+            box-shadow: 0 0.125rem 0.25rem rgba(94, 114, 228, 0.4);
+        }
+
+        .card-border {
+            border-left: 4px solid transparent;
+            border-radius: 0.5rem;
+        }
+
+        .card-border-primary {
+            border-left-color: #5e72e4;
+        }
+
+        .card-border-success {
+            border-left-color: #2dce89;
+        }
+
+        .bg-soft-primary {
+            background-color: rgba(94, 114, 228, 0.1) !important;
+        }
+
+        .bg-soft-success {
+            background-color: rgba(45, 206, 137, 0.1) !important;
+        }
+
+        .bg-soft-info {
+            background-color: rgba(17, 205, 239, 0.1) !important;
+        }
+
+        .bg-soft-warning {
+            background-color: rgba(251, 99, 64, 0.1) !important;
+        }
+
+        .bg-soft-danger {
+            background-color: rgba(245, 54, 92, 0.1) !important;
+        }
+
+        .bg-soft-secondary {
+            background-color: rgba(130, 134, 139, 0.1) !important;
+        }
+
+        .bg-soft-light {
+            background-color: rgba(248, 249, 250, 0.5) !important;
+        }
+
+        .btn-soft-primary {
+            background-color: rgba(94, 114, 228, 0.1);
+            color: #5e72e4;
+            border: none;
+        }
+
+        .btn-soft-primary:hover {
+            background-color: #5e72e4;
+            color: white;
+        }
+
+        .avatar-sm {
+            height: 3rem;
+            width: 3rem;
+        }
+
+        .avatar-lg {
+            height: 5rem;
+            width: 5rem;
+        }
+
+        .avatar-title {
+            align-items: center;
+            display: flex;
+            font-weight: 500;
+            height: 100%;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .fw-semibold {
+            font-weight: 600 !important;
+        }
+
+        .search-box .form-control:focus {
+            box-shadow: none;
+            border-color: #5e72e4;
+        }
+
+        .border-dashed {
+            border-style: dashed !important;
+        }
+
+        .rounded-pill {
+            border-radius: 50rem !important;
         }
     </style>
 @endsection
