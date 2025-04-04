@@ -25,7 +25,8 @@ class FetchHistoricalDataCommand extends Command
                             {--end-date= : End date (YYYY-MM-DD)}
                             {--chunk=10 : Number of symbols to process in each chunk}
                             {--from-id= : Start processing from this symbol ID}
-                            {--to-id= : Process symbols up to this ID}';
+                            {--to-id= : Process symbols up to this ID}
+                            {--is-fno : Only process symbols that are in F&O segment}';
 
     /**
      * The console command description.
@@ -59,21 +60,39 @@ class FetchHistoricalDataCommand extends Command
         $chunkSize = (int)$this->option('chunk');
         $fromId = $this->option('from-id');
         $toId = $this->option('to-id');
+        $isFno = $this->option('is-fno');
 
         $this->info("Fetching historical data from {$startDate} to {$endDate}");
 
         // Get symbols to fetch
+        $query = PreOpenMarketData::query();
+
+        // Apply FNO filter if requested
+        if ($isFno) {
+            $query->where('is_fno', true);
+            $this->info("Filtering for F&O symbols only");
+        }
+
         if ($fromId && $toId) {
             // Get symbols by ID range
-            $symbols = PreOpenMarketData::whereBetween('id', [$fromId, $toId])
-                ->pluck('symbol', 'id')
-                ->toArray();
+            $query->whereBetween('id', [$fromId, $toId]);
+            $symbols = $query->pluck('symbol', 'id')->toArray();
             $this->info("Processing symbols with IDs from {$fromId} to {$toId}: " . count($symbols) . " symbols");
         } elseif ($symbolOption === 'all') {
-            $symbols = PreOpenMarketData::pluck('symbol', 'id')->toArray();
-            $this->info("Processing all " . count($symbols) . " symbols");
+            $symbols = $query->pluck('symbol', 'id')->toArray();
+            $this->info("Processing " . count($symbols) . " symbols");
         } else {
             $symbol = PreOpenMarketData::where('symbol', $symbolOption)->first();
+            if (!$symbol) {
+                $this->error("Symbol {$symbolOption} not found");
+                return 1;
+            }
+
+            // if ($isFno && !$symbol->is_fno) {
+            //     $this->error("Symbol {$symbolOption} is not in F&O segment");
+            //     return 1;
+            // }
+
             $symbols = [$symbol->id => $symbol->symbol];
             $this->info("Processing symbol: {$symbol->symbol}");
         }

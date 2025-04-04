@@ -88,32 +88,28 @@ class NseApiClient
     }
 
     /**
-     * Get historical data for a symbol
+     * Make an authenticated request to the NSE API with retry logic
      */
-    public function getHistoricalData(string $symbol, string $fromDate, string $toDate, string $series = 'EQ'): Response
+    private function makeAuthenticatedRequest(string $endpoint, array $params = [], string $symbol = null): Response
     {
         // Force refresh cookies to ensure we have valid authentication
         $this->clearCookieCache();
         $authorisationCookies = $this->getAuthorisationCookies();
 
-        // First visit the quote page to establish a proper session
-        $this->prepareRequestWithHeaders()
-            ->withCookieJar($authorisationCookies)
-            ->get("{$this->baseUrl}/get-quotes/equity?symbol=" . urlencode($symbol));
+        // First visit the quote page to establish a proper session if symbol is provided
+        if ($symbol) {
+            $this->prepareRequestWithHeaders()
+                ->withCookieJar($authorisationCookies)
+                ->get("{$this->baseUrl}/get-quotes/equity?symbol=" . urlencode($symbol));
 
-        // Small delay to simulate human behavior
-        usleep(500000); // 0.5 seconds
+            // Small delay to simulate human behavior
+            usleep(500000); // 0.5 seconds
+        }
 
-        // Now make the actual API request
+        // Make the actual API request
         $response = $this->prepareRequestWithHeaders()
             ->withCookieJar($authorisationCookies)
-            ->get("{$this->baseUrl}/api/historical/securityArchives", [
-                'from' => $fromDate,
-                'to' => $toDate,
-                'symbol' => $symbol,
-                'dataType' => 'priceVolumeDeliverable',
-                'series' => $series
-            ]);
+            ->get("{$this->baseUrl}{$endpoint}", $params);
 
         // If we get a 401, try one more time with fresh cookies
         if ($response->status() === 401) {
@@ -127,25 +123,70 @@ class NseApiClient
 
             usleep(1000000); // 1 second delay
 
-            $this->prepareRequestWithHeaders()
-                ->withCookieJar($authorisationCookies)
-                ->get("{$this->baseUrl}/get-quotes/equity?symbol=" . urlencode($symbol));
+            if ($symbol) {
+                $this->prepareRequestWithHeaders()
+                    ->withCookieJar($authorisationCookies)
+                    ->get("{$this->baseUrl}/get-quotes/equity?symbol=" . urlencode($symbol));
 
-            usleep(1000000); // 1 second delay
+                usleep(1000000); // 1 second delay
+            }
 
             // Try the API request again
             $response = $this->prepareRequestWithHeaders()
                 ->withCookieJar($authorisationCookies)
-                ->get("{$this->baseUrl}/api/historical/securityArchives", [
-                    'from' => $fromDate,
-                    'to' => $toDate,
-                    'symbol' => $symbol,
-                    'dataType' => 'priceVolumeDeliverable',
-                    'series' => $series
-                ]);
+                ->get("{$this->baseUrl}{$endpoint}", $params);
         }
 
         return $response;
+    }
+
+    /**
+     * Get historical data for a symbol
+     */
+    public function getHistoricalData(string $symbol, string $fromDate, string $toDate, string $series = 'EQ'): Response
+    {
+        return $this->makeAuthenticatedRequest(
+            '/api/historical/securityArchives',
+            [
+                'from' => $fromDate,
+                'to' => $toDate,
+                'symbol' => $symbol,
+                'dataType' => 'priceVolumeDeliverable',
+                'series' => $series
+            ],
+            $symbol
+        );
+    }
+
+    /**
+     * Get equity data for a symbol
+     */
+    public function getSymbolData(string $symbol): Response
+    {
+        return $this->makeAuthenticatedRequest(
+            '/api/quote-equity',
+            ['symbol' => $symbol],
+            $symbol
+        );
+    }
+
+    /**
+     * Parse symbol metadata from API response
+     */
+    public function parseSymbolMetadata(array $data): array
+    {
+        return [
+            'is_fno' => $data['info']['isFNOSec'] ?? false,
+            'is_slb' => $data['info']['isSLBSec'] ?? false,
+            'is_etf' => $data['info']['isETFSec'] ?? false,
+            'is_suspended' => $data['info']['isSuspended'] ?? false,
+            'is_delisted' => $data['info']['isDelisted'] ?? false,
+            'isin' => $data['info']['isin'] ?? null,
+            'listing_date' => $data['info']['listingDate'] ?? null,
+            'industry' => $data['info']['industry'] ?? null,
+            'face_value' => $data['securityInfo']['faceValue'] ?? null,
+            'issued_size' => $data['securityInfo']['issuedSize'] ?? null,
+        ];
     }
 
     /**

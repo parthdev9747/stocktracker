@@ -21,7 +21,7 @@ class PreOpenMarketDataDataTable extends DataTable
                 if ($row->latestHistoricalData) {
                     return '₹' . number_format($row->latestHistoricalData->closing_price, 2);
                 }
-                return '<span class="text-muted">N/A</span>';
+                return 'N/A';
             })
             ->editColumn('change', function ($row) {
                 if ($row->latestHistoricalData && $row->latestHistoricalData->previous_close_price) {

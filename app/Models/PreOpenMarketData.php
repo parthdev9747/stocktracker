@@ -23,6 +23,18 @@ class PreOpenMarketData extends Model
      */
     protected $fillable = [
         'symbol',
+        'series',
+        'open_price',
+        'high_price',
+        'low_price',
+        'prev_close',
+        'last_price',
+        'change',
+        'p_change',
+        'total_traded_volume',
+        'total_traded_value',
+        'total_buy_quantity',
+        'total_sell_quantity',
         'is_fno',
         'status',
         'price',
@@ -37,24 +49,26 @@ class PreOpenMarketData extends Model
      * @var array
      */
     protected $casts = [
-        'is_fno' => 'boolean',
-        'price' => 'float',
+        'open_price' => 'float',
+        'high_price' => 'float',
+        'low_price' => 'float',
+        'prev_close' => 'float',
+        'last_price' => 'float',
         'change' => 'float',
-        'percent_change' => 'float',
-        'last_updated' => 'datetime',
+        'p_change' => 'float',
+        'total_traded_volume' => 'integer',
+        'total_traded_value' => 'float',
+        'total_buy_quantity' => 'integer',
+        'total_sell_quantity' => 'integer',
+        'is_fno' => 'boolean',
+        'is_slb' => 'boolean',
+        'is_etf' => 'boolean',
+        'is_suspended' => 'boolean',
+        'is_delisted' => 'boolean',
+        'face_value' => 'float',
+        'issued_size' => 'integer',
     ];
 
-    /**
-     * Get the historical data records for this stock.
-     */
-    public function historicalData()
-    {
-        return $this->hasMany(StockHistoricalData::class, 'symbol_id', 'id');
-    }
-
-    /**
-     * Get the latest historical data record for this stock.
-     */
     public function latestHistoricalData()
     {
         return $this->hasOne(StockHistoricalData::class, 'symbol_id', 'id')
@@ -76,45 +90,6 @@ class PreOpenMarketData extends Model
             ]);
     }
 
-    /**
-     * Get data formatted for DataTables
-     * 
-     * @param array $filters Optional filters to apply
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    public static function forDataTable($filters = [])
-    {
-        $query = self::query()
-            ->with('latestHistoricalData')
-            ->select('pre_open_market_data.*');
-
-        // Apply symbol filter if provided
-        if (!empty($filters['symbol_id']) && $filters['symbol_id'] !== 'all') {
-            $query->where('id', $filters['symbol_id']);
-        }
-
-        // Apply F&O filter if provided
-        if (isset($filters['is_fno'])) {
-            $query->where('is_fno', (bool)$filters['is_fno']);
-        }
-
-        // Apply status filter if provided
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        // Apply sorting
-        $query->orderBy('symbol');
-
-        return $query->get();
-    }
-
-    /**
-     * Get the latest pre-open market data for all symbols
-     * 
-     * @param bool $onlyFno Filter only F&O stocks if true
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
     public static function getLatest($onlyFno = false)
     {
         $query = self::query();
@@ -128,13 +103,6 @@ class PreOpenMarketData extends Model
             ->get();
     }
 
-    /**
-     * Get the latest pre-open market data with historical data
-     * 
-     * @param int $days Number of days of historical data to include
-     * @param bool $onlyFno Filter only F&O stocks if true
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
     public static function getLatestWithHistorical($days = 30, $onlyFno = false)
     {
         $query = self::query();
