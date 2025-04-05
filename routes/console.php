@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,3 +18,11 @@ use Illuminate\Support\Facades\Artisan;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Schedule::call(function (Schedule $schedule) {
+    $schedule->command('backup:clean');
+})->daily()->at('01:00');
+
+Schedule::call(function (Schedule $schedule) {
+    $schedule->command('backup:run');
+})->daily()->at('02:00');

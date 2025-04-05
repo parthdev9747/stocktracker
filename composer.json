@@ -12,6 +12,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "laravel/ui": "^4.2",
+        "spatie/laravel-backup": "^9.2",
         "spatie/laravel-permission": "^6.16",
         "yajra/laravel-datatables": "*"
     },
