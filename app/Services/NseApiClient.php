@@ -170,6 +170,15 @@ class NseApiClient
         );
     }
 
+    public function getSymbolChartData(string $symbol): Response
+    {
+        return $this->makeAuthenticatedRequest(
+            '/api/chart-databyindex',
+            ['index' => $symbol],
+            $symbol
+        );
+    }
+
     /**
      * Parse symbol metadata from API response
      */

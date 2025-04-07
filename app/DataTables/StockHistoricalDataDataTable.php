@@ -186,6 +186,8 @@ class StockHistoricalDataDataTable extends DataTable
             Column::make('closing_price')->title('Close')->orderable(true)->addClass('sorting'),
             Column::make('price_change')->title('Change')->orderable(false)->addClass('sorting'),
             Column::make('traded_quantity')->title('Volume')->orderable(true)->addClass('sorting'),
+            Column::make('delivery_quantity')->title('Delivery Qty')->orderable(true)->addClass('sorting'),
+            Column::make('delivery_percent')->title('Delivery %')->orderable(true)->addClass('sorting'),
             // Column::computed('action')
             //     ->title('Action')
             //     ->exportable(false)

@@ -3,22 +3,24 @@
     <!-- LOGO -->
     <div class="navbar-brand-box">
         <!-- Dark Logo-->
-        <a href="index" class="logo logo-dark">
-            <span class="logo-sm">
-                <img src="{{ URL::asset('build/images/logo-sm.png') }}" alt="" height="22">
+        <a href="index" class="logo logo-dark mt-5">
+            {{-- <span class="logo-sm">
+                <img src="{{ URL::asset('build/images/logo/tradelens.png') }}" alt="" height="22">
             </span>
             <span class="logo-lg">
-                <img src="{{ URL::asset('build/images/logo-dark.png') }}" alt="" height="17">
-            </span>
+                <img src="{{ URL::asset('build/images/logo/tradelens.png') }}" alt="" height="17">
+            </span> --}}
+            <h3 class="text-white">TradeLens</h3>
         </a>
         <!-- Light Logo-->
-        <a href="index" class="logo logo-light">
-            <span class="logo-sm">
-                <img src="{{ URL::asset('build/images/logo-sm.png') }}" alt="" height="22">
+        <a href="index" class="logo logo-light mt-5">
+            {{-- <span class="logo-sm">
+                <img src="{{ URL::asset('build/images/logo/tradelens.png') }}" alt="" height="22">
             </span>
             <span class="logo-lg">
-                <img src="{{ URL::asset('build/images/logo-light.png') }}" alt="" height="17">
-            </span>
+                <img src="{{ URL::asset('build/images/logo/tradelens.png') }}" alt="" height="17">
+            </span> --}}
+            <h3 class="text-white">TradeLens</h3>
         </a>
         <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover"
             id="vertical-hover">
@@ -71,6 +73,24 @@
                     <a class="nav-link menu-link {{ isActiveDropdown(['stock-historical-data.index']) }}"
                         href="{{ route('stock-historical-data.index') }}">
                         <i class="ri-dashboard-2-line"></i> <span>Stock historical data</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link menu-link {{ isActiveDropdown(['stock-high-low.index']) }}"
+                        href="{{ route('stock-high-low.index') }}">
+                        <i class="ri-line-chart-line"></i> <span>Stock High/Low Analysis</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link menu-link {{ isActiveDropdown(['fii-strategy.index']) }}"
+                        href="{{ route('fii-strategy.index') }}">
+                        <i class="ri-funds-line"></i> <span>FII Strategy</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link menu-link {{ isActiveDropdown(['commands.index']) }}"
+                        href="{{ route('commands.index') }}">
+                        <i class="ri-terminal-line"></i> <span>Command Dashboard</span>
                     </a>
                 </li>
                 @canany(['list-role', 'add-role', 'edit-role', 'delete-role', 'list-user', 'add-user', 'edit-user',

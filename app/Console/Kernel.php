@@ -22,6 +22,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         // Add this line
         \App\Console\Commands\FetchHistoricalDataCommand::class,
+
     ];
 
     // And optionally add it to the schedule
@@ -46,6 +47,14 @@ class Kernel extends ConsoleKernel
 
         // Add this to your schedule method in Kernel.php
         $schedule->command('market:fetch-holidays')->weekly()->mondays()->at('01:00');
+        // Add this to the schedule method
+        $schedule->command('stocks:analyze-high-low')->dailyAt('20:00');
+
+        // Update FII Strategy daily after market close
+        $schedule->command('fii:update-strategy')
+            ->weekdays()
+            ->at('16:30')
+            ->withoutOverlapping();
     }
 
     /**

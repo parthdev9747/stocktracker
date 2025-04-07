@@ -1,6 +1,18 @@
 @extends('layouts.master')
 
+@section('title')
+    Historical Data
+@endsection
+
 @section('content')
+    @component('components.breadcrumb')
+        @slot('li_1')
+            Market
+        @endslot
+        @slot('title')
+            Historical Data
+        @endslot
+    @endcomponent
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
@@ -147,6 +159,29 @@
             let startDateStr = startDate.toISOString().substr(0, 10);
             $('#start_date').val(startDateStr);
             $('#filter_start_date').val(startDateStr);
+
+            // Check for symbol_id in URL and set the dropdown value
+            const urlParams = new URLSearchParams(window.location.search);
+            const symbolIdParam = urlParams.get('symbol_id');
+            if (symbolIdParam) {
+                $('#filter_symbol').val(symbolIdParam).trigger('change');
+
+                // If choices.js is initialized on the select
+                if (typeof Choices !== 'undefined') {
+                    const filterSymbolElement = document.getElementById('filter_symbol');
+                    if (filterSymbolElement) {
+                        const filterSymbolInstance = filterSymbolElement.choices;
+                        if (filterSymbolInstance) {
+                            filterSymbolInstance.setChoiceByValue(symbolIdParam);
+                        }
+                    }
+                }
+
+                // Trigger filter after a short delay to ensure the select is updated
+                setTimeout(function() {
+                    window.LaravelDataTables['stock-historical-data-table'].draw();
+                }, 100);
+            }
 
             // Time period filter buttons
             $('.time-filter').on('click', function() {

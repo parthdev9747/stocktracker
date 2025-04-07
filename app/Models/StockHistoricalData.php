@@ -99,4 +99,91 @@ class StockHistoricalData extends Model
             ]
         );
     }
+
+    /**
+     * Get stocks with high delivery volume in the last week
+     * 
+     * @param int $days Number of days to look back
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getHighDeliveryStocks($days = 7)
+    {
+        $startDate = now()->subDays($days);
+
+        // Get all symbols with their historical data for the specified period
+        $symbols = PreOpenMarketData::with(['historicalData' => function ($query) use ($startDate) {
+            $query->where('trade_date', '>=', $startDate)
+                ->orderBy('trade_date', 'desc');
+        }])->get();
+
+        $filteredSymbols = [];
+        $debugInfo = [];
+
+        foreach ($symbols as $symbol) {
+            if (!$symbol->historicalData || $symbol->historicalData->count() < 2) {
+                continue; // Skip if we don't have at least 2 days of data
+            }
+
+            $historicalData = $symbol->historicalData->sortBy('trade_date');
+
+            // Check each day's data against previous day
+            $previousDay = null;
+
+            foreach ($historicalData as $day) {
+                if ($previousDay) {
+                    // Check our criteria
+                    $deliveryIncrease = $previousDay->delivery_quantity > 0 ?
+                        $day->delivery_quantity / $previousDay->delivery_quantity : 0;
+
+                    // Collect debug info for this symbol
+                    $debugInfo[$symbol->symbol] = [
+                        'date' => $day->trade_date,
+                        'delivery_qty' => $day->delivery_quantity,
+                        'prev_delivery_qty' => $previousDay->delivery_quantity,
+                        'delivery_increase' => $deliveryIncrease,
+                        'delivery_percent' => $day->delivery_percent,
+                        'closing_price' => $day->closing_price,
+                        'opening_price' => $day->opening_price,
+                        'criteria_met' => [
+                            'delivery_increase' => $deliveryIncrease >= 3,
+                            'delivery_percent' => $day->delivery_percent > 70,
+                            'price_condition' => $day->closing_price > $day->opening_price
+                        ]
+                    ];
+
+                    // Check if any of the criteria are met (more lenient approach)
+                    if (
+                        $deliveryIncrease >= 3 && // 3 times more delivery than previous day
+                        $day->delivery_percent > 70 && // Delivery percent > 70%
+                        $day->closing_price > $day->opening_price
+                    ) { // Closing price > Opening price
+
+                        $filteredSymbols[] = [
+                            'symbol' => $symbol->symbol,
+                            'date' => $day->trade_date,
+                            'delivery_quantity' => $day->delivery_quantity,
+                            'previous_delivery' => $previousDay->delivery_quantity,
+                            'delivery_increase' => $deliveryIncrease,
+                            'delivery_percent' => $day->delivery_percent,
+                            'opening_price' => $day->opening_price,
+                            'closing_price' => $day->closing_price,
+                            'price_change_percent' => (($day->closing_price - $day->opening_price) / $day->opening_price) * 100,
+                            'volume' => $day->traded_quantity
+                        ];
+
+                        break; // Found a match, no need to check other days
+                    }
+                }
+
+                $previousDay = $day;
+            }
+        }
+
+        // Log debug info if no results found
+        if (empty($filteredSymbols) && !empty($debugInfo)) {
+            \Log::info('High Delivery Stocks Debug Info', ['debug_info' => $debugInfo]);
+        }
+
+        return collect($filteredSymbols);
+    }
 }

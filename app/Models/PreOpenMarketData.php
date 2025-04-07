@@ -119,4 +119,12 @@ class PreOpenMarketData extends Model
             ->orderBy('symbol')
             ->get();
     }
+
+    /**
+     * Get the historical data for this symbol.
+     */
+    public function historicalData()
+    {
+        return $this->hasMany(StockHistoricalData::class, 'symbol_id', 'id');
+    }
 }
