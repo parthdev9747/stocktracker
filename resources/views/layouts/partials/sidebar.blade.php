@@ -88,6 +88,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link menu-link {{ isActiveDropdown(['demand-supply-zone.index']) }}"
+                        href="{{ route('demand-supply-zone.index') }}">
+                        <i class="ri-line-height"></i> <span>Demand & Supply Zone</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link menu-link {{ isActiveDropdown(['commands.index']) }}"
                         href="{{ route('commands.index') }}">
                         <i class="ri-terminal-line"></i> <span>Command Dashboard</span>

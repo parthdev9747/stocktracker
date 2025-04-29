@@ -1,0 +1,36 @@
+https://www.nseindia.com/api/marketStatus
+https://www.nseindia.com/api/market-turnover
+https://www.nseindia.com/api/market-turnover
+https://www.nseindia.com/api/equity-master
+https://www.nseindia.com/api/holiday-master?type=trading
+https://www.nseindia.com/api/latest-circular
+https://www.nseindia.com/api/merged-daily-reports?key=favCapital
+
+https://www.nseindia.com/api/allIndices
+https://www.nseindia.com/api/index-names
+https://www.nseindia.com/api/market-data-pre-open?key=ALL
+
+### Symbol
+https://www.nseindia.com/api/quote-equity?symbol=ASHOKLEY
+https://www.nseindia.com/api/historical/cm/equity/series?symbol=ASHOKLEY
+https://www.nseindia.com/api/quote-equity?symbol=ASHOKLEY&section=trade_info
+https://www.nseindia.com/api/top-corp-info?symbol=ASHOKLEY&market=equities
+https://www.nseindia.com/api/option-chain-equities?symbol=ASHOKLEY
+https://www.nseindia.com/api/quote-equity?symbol=ASHOKLEY
+https://www.nseindia.com/api/chart-databyindex?index=ASHOKLEYEQN
+https://www.nseindia.com/api/quote-equity?symbol=ASHOKLEY
+https://www.nseindia.com/api/historical/cm/equity?symbol=ASHOKLEY&series=[%22EQ%22]&from=01-04-2025&to=22-04-2025
+
+
+### Index
+https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050
+https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY
+https://www.nseindia.com/api/historical/indicesHistory?indexType=NIFTY%2050&from=01-04-2025&to=05-04-2025
+https://www.nseindia.com/api/chart-databyindex?index=NIFTY%2050&indices=true
+
+
+
+"open": 24185.4,
+"dayHigh": 24242.6,
+"dayLow": 24072,
+"lastPrice": 24213.4,

@@ -127,4 +127,28 @@ class PreOpenMarketData extends Model
     {
         return $this->hasMany(StockHistoricalData::class, 'symbol_id', 'id');
     }
+
+    /**
+     * Get the market data for this symbol.
+     */
+    public function marketData()
+    {
+        return $this->hasMany(MarketData::class, 'symbol_id', 'id');
+    }
+
+    /**
+     * Get demand and supply zones for the symbol
+     */
+    public function getDemandSupplyZones($lookbackPeriod = 90, $volumeThreshold = 1.5)
+    {
+        $historicalData = $this->historicalData()
+            ->where('trade_date', '>=', now()->subDays($lookbackPeriod))
+            ->orderBy('trade_date', 'asc')
+            ->get();
+
+        $analyzer = new \App\Services\DemandSupplyZoneAnalyzer($lookbackPeriod, $volumeThreshold);
+        $zones = $analyzer->analyze($historicalData);
+
+        return $analyzer->getActiveZones($zones, $this->last_price);
+    }
 }

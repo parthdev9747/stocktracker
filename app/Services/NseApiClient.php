@@ -180,6 +180,21 @@ class NseApiClient
     }
 
     /**
+     * Get trade info data for a symbol
+     */
+    public function getSymbolTradeInfoData(string $symbol): Response
+    {
+        return $this->makeAuthenticatedRequest(
+            '/api/quote-equity',
+            [
+                'symbol' => $symbol,
+                'section' => 'trade_info'
+            ],
+            $symbol
+        );
+    }
+
+    /**
      * Parse symbol metadata from API response
      */
     public function parseSymbolMetadata(array $data): array

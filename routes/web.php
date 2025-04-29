@@ -13,6 +13,8 @@ use App\Http\Controllers\NseIndicesController;
 use App\Http\Controllers\IndexNameController;
 use App\Http\Controllers\StockHistoricalDataController;
 use App\Http\Controllers\StockHighLowController;
+use App\Http\Controllers\DemandSupplyZoneController;
+use App\Http\Controllers\LiveMarketController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -65,6 +67,8 @@ Route::middleware('auth')->group(function () {
     Route::get('stock-high-low', [StockHighLowController::class, 'index'])->name('stock-high-low.index');
     Route::post('stock-high-low/analyze', [StockHighLowController::class, 'analyze'])->name('stock-high-low.analyze');
     // Add these routes to your web.php file
+    Route::get('/market-data', [App\Http\Controllers\MarketDataController::class, 'index'])->name('market-data.index');
+    Route::get('/market-data/fetch', [App\Http\Controllers\MarketDataController::class, 'fetchData'])->name('market-data.fetch');
     Route::get('/commands', [App\Http\Controllers\CommandController::class, 'index'])->name('commands.index');
     Route::post('/commands/run', [App\Http\Controllers\CommandController::class, 'run'])->name('commands.run');
     Route::post('/commands/run-all', [App\Http\Controllers\CommandController::class, 'runAll'])->name('commands.run-all');
@@ -77,6 +81,19 @@ Route::middleware('auth')->group(function () {
     // NSE Chart routes
     Route::get('/nse-chart/{symbol}', [App\Http\Controllers\NseChartController::class, 'show'])->name('nse-chart.show');
     Route::get('/api/nse-chart/{symbol}', [App\Http\Controllers\NseChartController::class, 'fetchChartData'])->name('nse-chart.data');
+
+    // Demand Supply Zone routes
+    Route::get('/demand-supply-zone', [DemandSupplyZoneController::class, 'index'])->name('demand-supply-zone.index');
+    Route::get('/demand-supply-zone/{symbolId}', [DemandSupplyZoneController::class, 'analyze'])->name('demand-supply-zone.analyze');
+
+    Route::get('/market-data', [LiveMarketController::class, 'stream']);
+
+    // Remove the old route
+    // Route::get('ds-zone', function () {
+    //     $symbol = PreOpenMarketData::find($symbolId);
+    //     $zones = $symbol->getDemandSupplyZones();
+    //     dd($zones);
+    // });
 });
 
 Auth::routes();

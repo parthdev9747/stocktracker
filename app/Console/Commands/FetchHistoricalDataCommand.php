@@ -26,7 +26,8 @@ class FetchHistoricalDataCommand extends Command
                             {--chunk=10 : Number of symbols to process in each chunk}
                             {--from-id= : Start processing from this symbol ID}
                             {--to-id= : Process symbols up to this ID}
-                            {--is-fno : Only process symbols that are in F&O segment}';
+                            {--is-fno : Only process symbols that are in F&O segment}
+                            {--current-day : Fetch only current day data}';
 
     /**
      * The console command description.
@@ -55,14 +56,23 @@ class FetchHistoricalDataCommand extends Command
     public function handle()
     {
         $symbolOption = $this->option('symbol');
-        $startDate = $this->option('start-date') ? Carbon::parse($this->option('start-date'))->format('Y-m-d') : Carbon::now()->subDays(30)->format('Y-m-d');
-        $endDate = $this->option('end-date') ? Carbon::parse($this->option('end-date'))->format('Y-m-d') : Carbon::now()->format('Y-m-d');
+        $currentDay = $this->option('current-day');
+
+        // If current-day flag is set, use today's date for both start and end
+        if ($currentDay) {
+            $startDate = Carbon::now()->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
+            $this->info("Fetching only current day data: {$startDate}");
+        } else {
+            $startDate = $this->option('start-date') ? Carbon::parse($this->option('start-date'))->format('Y-m-d') : Carbon::now()->subDays(30)->format('Y-m-d');
+            $endDate = $this->option('end-date') ? Carbon::parse($this->option('end-date'))->format('Y-m-d') : Carbon::now()->format('Y-m-d');
+            $this->info("Fetching historical data from {$startDate} to {$endDate}");
+        }
+
         $chunkSize = (int)$this->option('chunk');
         $fromId = $this->option('from-id');
         $toId = $this->option('to-id');
         $isFno = $this->option('is-fno');
-
-        $this->info("Fetching historical data from {$startDate} to {$endDate}");
 
         // Get symbols to fetch
         $query = PreOpenMarketData::query();
@@ -115,7 +125,7 @@ class FetchHistoricalDataCommand extends Command
                     $fromDate = Carbon::parse($startDate)->format('d-m-Y');
                     $toDate = Carbon::parse($endDate)->format('d-m-Y');
 
-                    $this->info("Requesting data for {$symbolName} from {$fromDate} to {$toDate}");
+                    $this->info("Requesting data for {$symbolName} - {$symbolId} from {$fromDate} to {$toDate}");
 
                     $response = $this->apiClient->getHistoricalData($symbolName, $fromDate, $toDate);
 
